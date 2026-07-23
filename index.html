@@ -1,337 +1,123 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="robots" content="noindex, nofollow" />
-  <title>EVLE Phase II - 3 Month Lookahead Calendar</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVLE Phase II Lookahead Calendar</title>
+
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+        .calendar-controls{
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
+            align-items:center;
+            padding:16px;
+            background:#fff;
+            border-bottom:1px solid #ddd;
+        }
+
+        .calendar-controls button,
+        .calendar-controls select{
+            padding:10px 14px;
+            border-radius:8px;
+            border:1px solid #ccc;
+            cursor:pointer;
+        }
+
+        .view-toggle.active{
+            background:#2563eb;
+            color:#fff;
+            border-color:#2563eb;
+        }
+
+        #calendarContainer{
+            display:grid;
+            gap:20px;
+            padding:20px;
+        }
+
+        .one-month{
+            grid-template-columns:1fr;
+        }
+
+        .three-month{
+            grid-template-columns:repeat(3,minmax(350px,1fr));
+        }
+
+        @media (max-width:1200px){
+            .three-month{
+                grid-template-columns:1fr;
+            }
+        }
+    </style>
+
 </head>
 <body>
-  <header class="site-header">
+
+<header class="site-header">
     <div>
-      <div class="eyebrow">EVLE Phase II - Editable Lookahead</div>
-      <h1>3 Month Calendar View</h1>
-      <p class="subtitle">CSV-driven calendar with editable events, category colors, search, filtering, and PDF-ready print layout.</p>
-    </div>
-    <div class="header-actions">
-      <button id="print-pdf" class="primary">Export PDF</button>
-      <button id="export-csv" class="secondary">Export CSV</button>
-      <label class="secondary file-label">Import CSV<input id="import-csv" type="file" accept=".csv,text/csv" /></label>
-    </div>
-  </header>
-
-  <section class="toolbar">
-    <input id="search" class="search" type="search" placeholder="Search events, categories, status, or notes..." />
-    <label class="month-picker">Start month <input id="start-month" type="month" /></label>
-    <button id="reset-view" class="secondary small">Reset to first 3 months</button>
-  </section>
-
-  <main class="app-shell">
-    <section class="calendar-zone">
-      <div id="calendar-wrap" class="calendar-wrap" aria-label="3 month calendar"></div>
-    </section>
-
-    <aside class="side-panel" id="side-panel">
-      <button id="collapse-panel" class="collapse-btn" aria-expanded="true">Hide editor</button>
-
-      <details open>
-        <summary>Snapshot</summary>
-        <div class="stats">
-          <div><strong id="visible-count">0</strong><span>visible events</span></div>
-          <div><strong id="category-count">0</strong><span>categories</span></div>
-          <div><strong id="tentative-count">0</strong><span>tentative</span></div>
+        <div class="eyebrow">
+            EVLE Phase II
         </div>
-      </details>
 
-      <details open>
-        <summary>Add or edit event</summary>
-        <form id="event-form" class="event-form">
-          <input type="hidden" id="event-id" />
-          <label>Date <input id="event-date" type="date" required /></label>
-          <label>Title <input id="event-title" type="text" required placeholder="Meeting or milestone title" /></label>
-          <label>Category <input id="event-category" type="text" required placeholder="SnoCo, IDT, WSDOT..." /></label>
-          <label>Status
-            <select id="event-status">
-              <option>Confirmed</option>
-              <option>Tentative</option>
-              <option>Cancelled</option>
-            </select>
-          </label>
-          <label>Details <textarea id="event-details" rows="5" placeholder="One item per line or paste notes here"></textarea></label>
-          <div class="form-actions">
-            <button class="primary" type="submit">Save event</button>
-            <button class="secondary" id="clear-form" type="button">Clear</button>
-            <button class="danger" id="delete-event" type="button">Delete</button>
-          </div>
-        </form>
-      </details>
-
-      <details open>
-        <summary>Categories and colors</summary>
-        <div class="hint">Uncheck a category to hide it. Color choices save in this browser.</div>
-        <div id="category-editor" class="category-editor"></div>
-      </details>
-
-      <details>
-        <summary>Agenda list</summary>
-        <div id="agenda" class="agenda"></div>
-      </details>
-    </aside>
-  </main>
-
-  <dialog id="event-dialog">
-    <div class="dialog-top">
-      <div>
-        <span id="dialog-badge" class="badge"></span>
-        <h2 id="dialog-title"></h2>
-        <p id="dialog-date"></p>
-      </div>
-      <button id="close-dialog" class="secondary small">Close</button>
+        <h1 id="headerTitle">
+            Lookahead Calendar
+        </h1>
     </div>
-    <div id="dialog-body"></div>
-    <div class="dialog-footer">
-      <button id="dialog-edit" class="primary">Edit this event</button>
-    </div>
-  </dialog>
 
-  <script id="embedded-csv" type="text/plain">id,date,title,category,status,details,sourceMonth
-2026-07-01-1,2026-07-01,IDT,IDT,Confirmed,,July
-2026-07-01-2,2026-07-01,PSE,PSE,Confirmed,,July
-2026-07-01-4,2026-07-01,Eric/Miranda/Kylee/Patrick,Other,Confirmed,,July
-2026-07-01-3,2026-07-01,ST/Evt Coordination Meeting,Other,Confirmed,,July
-2026-07-02-5,2026-07-02,Third-Party Prep,Third-Party Prep,Confirmed,"ASH Track Alignment & Overcrossing Interface (Will, Parth)
-94th Roadway Pros/Cons Feasibility (Will, Ian Fabik)
-EGN-E Alignment Update (Will McGoey or Vahid)",July
-2026-07-02-6,2026-07-02,Corridor Design (rescheduled from June 30),Corridor Design,Confirmed,OMF Lead Track Discussion (Patrick/Nick,July
-2026-07-02-7,2026-07-02,ST/ESnoCo Coordination Meeting,SnoCo,Confirmed,,July
-2026-07-02-8,2026-07-02,Eric/Miranda/Kylee/Patrick,Other,Confirmed,,July
-2026-07-03-9,2026-07-03,Independence Day (observed),Holiday,Confirmed,,July
-2026-07-06-10,2026-07-06,SnoCo,SnoCo,Confirmed,"ASH Track Alignment & Overcrossing Interface (Will McGoey/Ian/Parth)
-94th Roadway Update (Will McGoey/Ian/Parth)
-Note to mention Eric’s vacation and who to contact in his absence.",July
-2026-07-06-11,2026-07-06,Lynnwood,Lynnwood,Confirmed,"Update on 33rd (City)
-Bus Loop/On Street Bus Facilities (Windi Shapley)",July
-2026-07-07-12,2026-07-07,Station Area Planning,Station Area Planning,Confirmed,Bike Parking (Chris),July
-2026-07-07-14,2026-07-07,Corridor Design,Corridor Design,Cancelled,Cancel - smaller meeting to catch Chelsey up from PTO.,July
-2026-07-07-13,2026-07-07,CT/ET Workshop Final Details (Sloan/Andrea),CT/ET,Tentative,"CT/ET Bus Bay Criteria Comment Resolution (Rowyn/Chabeli) (Tentative) - ran out of time
-CT Swift 702 SWI-C Comments (Andrea/Windi) - ran out of time",July
-2026-07-07-19,2026-07-07,IN person meeting with WSDOT,WSDOT,Confirmed,"-Channelization plan review and comments
--Compatibility line around interchanges
--CR and DA report outlines",July
-2026-07-07-18,2026-07-07,WSDOT,WSDOT,Confirmed,,July
-2026-07-07-15,2026-07-07,Everett,Everett,Confirmed,EGN-E Alignment Update (Will or Vahid),July
-2026-07-07-17,2026-07-07,City update on annexation,Other,Confirmed,Note to mention Erics vacation and who to contact in his absence.,July
-2026-07-07-16,2026-07-07,City update on stadium,Other,Confirmed,,July
-2026-07-08-20,2026-07-08,IDT,IDT,Confirmed,,July
-2026-07-08-21,2026-07-08,WDFW Meeting,Other,Confirmed,Discuss geotechnical explorations (Becki/Per),July
-2026-07-09-22,2026-07-09,Third-Party Prep,Third-Party Prep,Confirmed,,July
-2026-07-09-23,2026-07-09,Cancelled - replaced with SAP Partner Meeting,Station Area Planning,Cancelled,,July
-2026-07-09-25,2026-07-09,SAP CT/ET/Partner Meeting 1-3 PM,CT/ET,Confirmed,(Move to Virtual) ASH & MAR Station Layout Workshop,July
-2026-07-09-24,2026-07-09,SnoPUD - conflict resolution,SnoPUD,Confirmed,,July
-2026-07-10-26,2026-07-10,CT/ET,CT/ET,Tentative,"Tentative - TI Workplan had this for the Wk of 27th
-Any needed follow-up on ASH, MAR layouts and/or SWI-A, SWI-C and EGN station optimization findings",July
-2026-07-13-27,2026-07-13,Permitting Working Group,Permitting Working Group,Confirmed,,July
-2026-07-14-28,2026-07-14,Station Area Planning,Station Area Planning,Confirmed,"ASH/MAR Meeting Debrief (Windi/Sloan)
-CT SWI/EGN Comments (Adam)",July
-2026-07-14-30,2026-07-14,Corridor Design,Corridor Design,Cancelled,cancelled,July
-2026-07-14-29,2026-07-14,CT/ET Bus Bay Criteria Comment Resolution (Chabeli),CT/ET,Confirmed,EVT TOD Update (Betsey),July
-2026-07-15-31,2026-07-15,IDT,IDT,Confirmed,,July
-2026-07-16-32,2026-07-16,Third-Party Prep,Third-Party Prep,Tentative,"128th questions (Will, Ian Fabik)
-Debrief July 9 Station Partner Meeting (tent - Betsy-Sigal?)
-Transit Way Agreement - initial discussion w/ Lynnwood on 8/3 (DJ)",July
-2026-07-16-33,2026-07-16,WSDOT Noise Walls,WSDOT,Confirmed,,July
-2026-07-16-34,2026-07-16,SnoPUD distribution - conflict resolution,SnoPUD,Confirmed,,July
-2026-07-17-35,2026-07-17,Hard design-driver milestone,Milestone,Confirmed,,July
-2026-07-20-36,2026-07-20,IAG,IAG,Confirmed,,July
-2026-07-20-37,2026-07-20,Cancelled,Other,Cancelled,,July
-2026-07-21-38,2026-07-21,Station Area Planning,Station Area Planning,Confirmed,EGN-B Update (Presenter: Alan/Heidi),July
-2026-07-21-39,2026-07-21,Corridor Design,Corridor Design,Confirmed,BI Transmission Corridor Civil Update (Ian),July
-2026-07-21-40,2026-07-21,WSDOT Noise Walls (Will),WSDOT,Confirmed,,July
-2026-07-22-41,2026-07-22,IDT,IDT,Confirmed,,July
-2026-07-22-43,2026-07-22,SnoPUD - service availability,SnoPUD,Confirmed,,July
-2026-07-22-42,2026-07-22,service availability,Other,Confirmed,,July
-2026-07-23-44,2026-07-23,Third-Party Prep,Third-Party Prep,Confirmed,,July
-2026-07-23-45,2026-07-23,WSDOT materials for 7/27 meeting,WSDOT,Confirmed,,July
-2026-07-27-47,2026-07-27,Permitting Working Group,Permitting Working Group,Confirmed,,July
-2026-07-27-46,2026-07-27,WSDOT,WSDOT,Confirmed,"Noise Walls (Will)
-Compatibility Line around interchanges - SR 525 and I-5 crossing (Molly)
-O&M Plans Approach (Molly)",July
-2026-07-28-48,2026-07-28,Station Area Planning,Station Area Planning,Confirmed,,July
-2026-07-28-49,2026-07-28,Corridor Design,Corridor Design,Tentative,"KOZ Discussion (Mike/Diane)
-structures clearance under guideway (???)",July
-2026-07-29-50,2026-07-29,IDT,IDT,Confirmed,,July
-2026-07-30-51,2026-07-30,Third-Party Prep,Third-Party Prep,Confirmed,"128th questions (Will, Ian Fabik)",July
-2026-08-03-52,2026-08-03,SnoCo,SnoCo,Tentative,"128th questions (Will, Ian Fabik)
-Property Owner Letters (Jacyln-ST)
-Planning staff intros (Roxy & David -ST)
-Gap analysis overview & review timeline (Roxy & David)??",August
-2026-08-03-54,2026-08-03,Lynnwood,Lynnwood,Confirmed,"Planning staff intros (Roxy & David)
-Transit Way Agreement (DJ)",August
-2026-08-03-55,2026-08-03,PPP Update?,Other,Tentative,Fire Life Safety (ST),August
-2026-08-03-53,2026-08-03,PPP Update??,Other,Tentative,,August
-2026-08-04-56,2026-08-04,Station Area Planning,Station Area Planning,Tentative,"Driver Relief Station at ASH pocket track (Ping)
-MAR 130th /access drive sections (tentative)
-Signage Approach (Candace) (Tentative - Justin confirming)",August
-2026-08-04-57,2026-08-04,Corridor Design,Corridor Design,Confirmed,,August
-2026-08-04-58,2026-08-04,Everett,Everett,Confirmed,,August
-2026-08-04-60,2026-08-04,PPP Update?,Other,Tentative,,August
-2026-08-04-59,2026-08-04,Property Owner Letters,Other,Tentative,"EGN-B Station Area Layout Update (tentative)
-Planning staff intros (Roxy & David)
-Gap analysis overview & review timeline (Roxy & David)??",August
-2026-08-05-61,2026-08-05,IDT,IDT,Confirmed,,August
-2026-08-05-62,2026-08-05,PSE,PSE,Confirmed,,August
-2026-08-06-63,2026-08-06,Third-Party Prep,Third-Party Prep,Tentative,DEIS timing to AHJ’s (tentative),August
-2026-08-10-64,2026-08-10,Permitting Working Group,Permitting Working Group,Confirmed,,August
-2026-08-11-65,2026-08-11,Station Area Planning,Station Area Planning,Confirmed,,August
-2026-08-11-68,2026-08-11,Corridor Des,Corridor Design,Confirmed,,August
-2026-08-11-67,2026-08-11,Corridor Design,Corridor Design,Confirmed,,August
-2026-08-11-66,2026-08-11,Virtual Meeting,Other,Tentative,Station Hoistway and Canopy Design (tentative),August
-2026-08-12-69,2026-08-12,IDT,IDT,Confirmed,,August
-2026-08-13-70,2026-08-13,Third-Party Prep,Third-Party Prep,Confirmed,,August
-2026-08-13-71,2026-08-13,SnoPUD - conflict resolution,SnoPUD,Confirmed,,August
-2026-08-17-72,2026-08-17,IAG,IAG,Confirmed,"DEIS Distribution and ST Sharepoint access, DEIS structure/how to navigate",August
-2026-08-17-73,2026-08-17,Engagement plan for DEIS,Other,Confirmed,,August
-2026-08-18-74,2026-08-18,Station Area Planning,Station Area Planning,Confirmed,,August
-2026-08-18-75,2026-08-18,Corridor Design,Corridor Design,Confirmed,,August
-2026-08-19-76,2026-08-19,IDT,IDT,Confirmed,,August
-2026-08-20-77,2026-08-20,Third-Party Prep,Third-Party Prep,Confirmed,,August
-2026-08-21-78,2026-08-21,CT/ET Workshop (Tentative),CT/ET,Tentative,,August
-2026-08-21-79,2026-08-21,EVT station TI optimization findings,Other,Confirmed,,August
-2026-08-24-82,2026-08-24,Permitting Working Group,Permitting Working Group,Confirmed,,August
-2026-08-24-80,2026-08-24,WSDOT,WSDOT,Confirmed,,August
-2026-08-24-81,2026-08-24,TBD - O&M Coordination,Other,Confirmed,,August
-2026-08-25-83,2026-08-25,Station Area Planning,Station Area Planning,Confirmed,,August
-2026-08-25-84,2026-08-25,Corridor Design,Corridor Design,Confirmed,,August
-2026-08-26-85,2026-08-26,IDT,IDT,Confirmed,,August
-2026-08-26-86,2026-08-26,SnoPUD - service availability,SnoPUD,Confirmed,,August
-2026-08-27-87,2026-08-27,Third-Party Prep,Third-Party Prep,Confirmed,,August
-2026-09-01-89,2026-09-01,Station Area Planning,Station Area Planning,Confirmed,,September
-2026-09-01-90,2026-09-01,Corridor Design,Corridor Design,Confirmed,,September
-2026-09-01-88,2026-09-01,Everett,Everett,Confirmed,,September
-2026-09-02-91,2026-09-02,IDT,IDT,Confirmed,,September
-2026-09-02-92,2026-09-02,PSE,PSE,Confirmed,,September
-2026-09-03-93,2026-09-03,Third-Party Prep,Third-Party Prep,Confirmed,,September
-2026-09-07-94,2026-09-07,Labor Day,Holiday,Confirmed,,September
-2026-09-08-95,2026-09-08,Station Area Planning,Station Area Planning,Confirmed,SAA Screening Results (Gina),September
-2026-09-08-96,2026-09-08,Corridor Design,Corridor Design,Confirmed,,September
-2026-09-09-97,2026-09-09,IDT,IDT,Confirmed,,September
-2026-09-10-98,2026-09-10,Third-Party Prep,Third-Party Prep,Confirmed,,September
-2026-09-10-100,2026-09-10,SnoPUD - conflict resolution,SnoPUD,Confirmed,,September
-2026-09-10-99,2026-09-10,SAA Screening Results,Other,Confirmed,,September
-2026-09-11-101,2026-09-11,CT/ET,CT/ET,Confirmed,,September
-2026-09-14-102,2026-09-14,Permitting Working Group,Permitting Working Group,Confirmed,,September
-2026-09-15-103,2026-09-15,Station Area Planning,Station Area Planning,Confirmed,,September
-2026-09-15-104,2026-09-15,Corridor Design,Corridor Design,Confirmed,,September
-2026-09-16-105,2026-09-16,IDT,IDT,Confirmed,,September
-2026-09-17-106,2026-09-17,Third-Party Prep,Third-Party Prep,Confirmed,,September
-2026-09-21-109,2026-09-21,IAG,IAG,Confirmed,,September
-2026-09-21-107,2026-09-21,SnoCo?,SnoCo,Tentative,,September
-2026-09-21-108,2026-09-21,Lynnwood?,Lynnwood,Tentative,,September
-2026-09-22-110,2026-09-22,Station Area Planning,Station Area Planning,Confirmed,,September
-2026-09-22-111,2026-09-22,Corridor Design,Corridor Design,Confirmed,,September
-2026-09-23-112,2026-09-23,IDT,IDT,Confirmed,,September
-2026-09-23-114,2026-09-23,SnoPUD - service availability,SnoPUD,Confirmed,,September
-2026-09-23-113,2026-09-23,service availability,Other,Confirmed,,September
-2026-09-24-115,2026-09-24,Third-Party Prep,Third-Party Prep,Confirmed,,September
-2026-09-28-117,2026-09-28,Permitting Working Group,Permitting Working Group,Confirmed,,September
-2026-09-28-116,2026-09-28,WSDOT,WSDOT,Confirmed,,September
-2026-09-29-118,2026-09-29,Station Area Planning,Station Area Planning,Confirmed,,September
-2026-09-29-119,2026-09-29,Corridor Design,Corridor Design,Confirmed,,September
-2026-09-30-120,2026-09-30,IDT,IDT,Confirmed,,September
-2026-09-30-121,2026-09-30,CT/ET Partner Workshop (Tentative),CT/ET,Tentative,,September
-2026-09-30-122,2026-09-30,EVT Station Layout to inform Major Input Freeze,Milestone,Confirmed,,September
-2026-10-01-123,2026-10-01,Third-Party Prep,Third-Party Prep,Confirmed,,October
-2026-10-05-124,2026-10-05,SnoCo,SnoCo,Confirmed,,October
-2026-10-05-125,2026-10-05,Lynnwood,Lynnwood,Confirmed,,October
-2026-10-06-128,2026-10-06,Station Area Planning,Station Area Planning,Confirmed,,October
-2026-10-06-127,2026-10-06,Corridor Design,Corridor Design,Confirmed,,October
-2026-10-06-126,2026-10-06,Everett,Everett,Confirmed,,October
-2026-10-07-129,2026-10-07,IDT,IDT,Confirmed,,October
-2026-10-07-130,2026-10-07,PSE,PSE,Confirmed,,October
-2026-10-08-131,2026-10-08,Third-Party Prep,Third-Party Prep,Confirmed,,October
-2026-10-08-132,2026-10-08,SnoPUD - conflict resolution,SnoPUD,Confirmed,,October
-2026-10-09-133,2026-10-09,CT/ET,CT/ET,Confirmed,,October
-2026-10-12-134,2026-10-12,Indigenous People’s Day - ST Office Closed,Holiday,Confirmed,,October
-2026-10-13-135,2026-10-13,Station Area Planning,Station Area Planning,Confirmed,,October
-2026-10-13-136,2026-10-13,Corridor Design,Corridor Design,Confirmed,,October
-2026-10-14-137,2026-10-14,IDT,IDT,Confirmed,,October
-2026-10-15-138,2026-10-15,Third-Party Prep,Third-Party Prep,Confirmed,,October
-2026-10-19-139,2026-10-19,IAG,IAG,Confirmed,,October
-2026-10-20-140,2026-10-20,Station Area Planning,Station Area Planning,Confirmed,,October
-2026-10-20-141,2026-10-20,Corridor Design,Corridor Design,Confirmed,,October
-2026-10-21-142,2026-10-21,IDT,IDT,Confirmed,,October
-2026-10-21-143,2026-10-21,SnoPUD - service availability,SnoPUD,Confirmed,,October
-2026-10-22-144,2026-10-22,Third-Party Prep,Third-Party Prep,Confirmed,,October
-2026-10-26-146,2026-10-26,Permitting Working Group,Permitting Working Group,Confirmed,,October
-2026-10-26-145,2026-10-26,WSDOT,WSDOT,Confirmed,,October
-2026-10-27-147,2026-10-27,Station Area Planning,Station Area Planning,Confirmed,,October
-2026-10-27-148,2026-10-27,Corridor Design,Corridor Design,Confirmed,,October
-2026-10-28-149,2026-10-28,IDT,IDT,Confirmed,,October
-2026-10-29-150,2026-10-29,Third-Party Prep,Third-Party Prep,Confirmed,,October
-2026-11-02-151,2026-11-02,SnoCo,SnoCo,Confirmed,,November
-2026-11-02-152,2026-11-02,Lynnwood,Lynnwood,Confirmed,,November
-2026-11-03-153,2026-11-03,Station Area Planning,Station Area Planning,Confirmed,,November
-2026-11-03-154,2026-11-03,Corridor Design,Corridor Design,Confirmed,,November
-2026-11-04-155,2026-11-04,IDT,IDT,Confirmed,,November
-2026-11-04-156,2026-11-04,PSE,PSE,Confirmed,,November
-2026-11-05-157,2026-11-05,Third-Party Prep,Third-Party Prep,Confirmed,,November
-2026-11-09-158,2026-11-09,Permitting Working Group,Permitting Working Group,Confirmed,,November
-2026-11-10-160,2026-11-10,Station Area Planning,Station Area Planning,Confirmed,,November
-2026-11-10-161,2026-11-10,Corridor Design,Corridor Design,Confirmed,,November
-2026-11-10-159,2026-11-10,Everett,Everett,Confirmed,,November
-2026-11-11-162,2026-11-11,Veterans Day - ST Office Closed,Holiday,Confirmed,,November
-2026-11-12-163,2026-11-12,Third-Party Prep,Third-Party Prep,Confirmed,,November
-2026-11-12-164,2026-11-12,SnoPUD - conflict resolution,SnoPUD,Confirmed,,November
-2026-11-13-165,2026-11-13,CT/ET,CT/ET,Confirmed,,November
-2026-11-16-168,2026-11-16,IAG,IAG,Confirmed,,November
-2026-11-16-166,2026-11-16,SnoCo,SnoCo,Confirmed,,November
-2026-11-16-167,2026-11-16,Lynnwood,Lynnwood,Confirmed,,November
-2026-11-17-169,2026-11-17,Station Area Planning,Station Area Planning,Confirmed,,November
-2026-11-17-170,2026-11-17,Corridor Design,Corridor Design,Confirmed,,November
-2026-11-18-171,2026-11-18,IDT,IDT,Confirmed,,November
-2026-11-19-172,2026-11-19,Third-Party Prep,Third-Party Prep,Confirmed,,November
-2026-11-23-174,2026-11-23,Permitting Working Group,Permitting Working Group,Confirmed,,November
-2026-11-23-173,2026-11-23,WSDOT,WSDOT,Confirmed,,November
-2026-11-24-176,2026-11-24,Station Area Planning,Station Area Planning,Confirmed,,November
-2026-11-24-178,2026-11-24,Corridor Design,Corridor Design,Confirmed,,November
-2026-11-24-175,2026-11-24,Everett,Everett,Confirmed,,November
-2026-11-24-177,2026-11-24,Virtual Meeting,Other,Confirmed,,November
-2026-11-25-179,2026-11-25,IDT,IDT,Confirmed,,November
-2026-11-25-180,2026-11-25,SnoPUD - service availability,SnoPUD,Confirmed,,November
-2026-11-26-181,2026-11-26,Thanksgiving Day,Holiday,Confirmed,,November
-2026-12-01-182,2026-12-01,Station Area Planning,Station Area Planning,Confirmed,,December
-2026-12-01-183,2026-12-01,Corridor Design,Corridor Design,Confirmed,,December
-2026-12-02-184,2026-12-02,IDT,IDT,Confirmed,,December
-2026-12-02-185,2026-12-02,PSE,PSE,Confirmed,,December
-2026-12-03-186,2026-12-03,Third-Party Prep,Third-Party Prep,Confirmed,,December
-2026-12-07-187,2026-12-07,SnoCo,SnoCo,Confirmed,,December
-2026-12-07-188,2026-12-07,Lynnwood,Lynnwood,Confirmed,,December
-2026-12-08-190,2026-12-08,Station Area Planning,Station Area Planning,Confirmed,,December
-2026-12-08-191,2026-12-08,Corridor Design,Corridor Design,Confirmed,,December
-2026-12-08-189,2026-12-08,Everett,Everett,Confirmed,,December
-2026-12-09-192,2026-12-09,IDT,IDT,Confirmed,,December
-2026-12-10-193,2026-12-10,Third-Party Prep,Third-Party Prep,Confirmed,,December
-2026-12-10-194,2026-12-10,SnoPUD - conflict resolution,SnoPUD,Confirmed,,December
-2026-12-11-195,2026-12-11,CT/ET,CT/ET,Confirmed,,December
-2026-12-14-196,2026-12-14,Permitting Working Group,Permitting Working Group,Confirmed,,December
-2026-12-14-197,2026-12-14,IAG,IAG,Confirmed,,December
-2026-12-15-198,2026-12-15,Station Area Planning,Station Area Planning,Confirmed,,December
-2026-12-15-199,2026-12-15,Corridor Design,Corridor Design,Confirmed,,December
-2026-12-16-200,2026-12-16,IDT,IDT,Confirmed,,December
-2026-12-17-201,2026-12-17,Third-Party Prep,Third-Party Prep,Confirmed,,December
-2026-12-21-204,2026-12-21,IAG,IAG,Confirmed,,December
-2026-12-21-202,2026-12-21,SnoCo,SnoCo,Confirmed,,December
-2026-12-21-203,2026-12-21,Lynnwood,Lynnwood,Confirmed,,December
-2026-12-22-206,2026-12-22,Station Area Planning,Station Area Planning,Confirmed,,December
-2026-12-22-207,2026-12-22,Corridor Design,Corridor Design,Confirmed,,December
-2026-12-22-205,2026-12-22,Everett,Everett,Confirmed,,December
-2026-12-23-208,2026-12-23,IDT,IDT,Confirmed,,December
-2026-12-23-209,2026-12-23,SnoPUD - service availability,SnoPUD,Confirmed,,December
-2026-12-24-210,2026-12-24,Third-Party Prep,Third-Party Prep,Confirmed,,December
-2026-12-25-211,2026-12-25,Christmas Day,Holiday,Confirmed,,December
-2026-12-28-212,2026-12-28,Permitting Working Group,Permitting Working Group,Confirmed,,December
-</script>
-  <script src="script.js"></script>
-</body>
-</html>
+    <div class="header-meta">
+        July - December 2026
+    </div>
+</header>
+
+<section class="calendar-controls">
+
+    <button id="prevMonth">
+        ◀ Previous
+    </button>
+
+    <select id="monthSelector">
+        <option value="2026-07">July 2026</option>
+        <option value="2026-08">August 2026</option>
+        <option value="2026-09">September 2026</option>
+        <option value="2026-10">October 2026</option>
+        <option value="2026-11">November 2026</option>
+        <option value="2026-12">December 2026</option>
+    </select>
+
+    <button id="nextMonth">
+        Next ▶
+    </button>
+
+    <button id="oneMonthView"
+            class="view-toggle">
+        1 Month View
+    </button>
+
+    <button id="threeMonthView"
+            class="view-toggle active">
+        3 Month Lookahead
+    </button>
+
+</section>
+
+<div id="calendarContainer"
+     class="three-month">
+
+</div>
+
+<script>
+
+let currentMonthIndex = 0;
+
+const months = [
+    "2026-07",
+    "2026-08",
+    "2026-09",
+    "2026-10",
+    "2026-11",
+    "2026-12"
+];
+
