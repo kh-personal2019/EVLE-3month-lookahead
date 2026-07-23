@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>EVLE Phase II - August 2026 Lookahead Calendar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <div class="eyebrow">EVLE Phase II - 2026 Lookahead</div>
+      <h1 id="month-title">August 2026</h1>
+    </div>
+    <div class="header-meta">
+      Built from the 3-Month Lookahead document<br />Last updated in source: 6/30/2026
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <input id="search" class="search" type="search" placeholder="Search August events, categories, or notes..." />
+    <div id="legend" class="legend" aria-label="Category filters"></div>
+    <button id="download-json" class="export-btn">Download event JSON</button>
+  </section>
+
+  <main class="layout">
+    <section class="calendar" aria-label="August 2026 calendar">
+      <div id="weekdays" class="weekdays"></div>
+      <div id="calendar-grid" class="grid"></div>
+    </section>
+
+    <aside class="sidebar">
+      <section class="panel">
+        <h2>August snapshot</h2>
+        <div class="stat-grid">
+          <div class="stat"><strong id="event-count">0</strong><span>visible items</span></div>
+          <div class="stat"><strong id="category-count">0</strong><span>active groups</span></div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Agenda list</h2>
+        <div id="agenda" class="agenda"></div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <div class="modal-top">
+        <div>
+          <span id="modal-badge" class="badge"></span>
+          <h3 id="modal-title"></h3>
+          <div id="modal-date" class="modal-date"></div>
+        </div>
+        <button id="close" class="close" aria-label="Close event details">x</button>
+      </div>
+      <ul id="modal-details"></ul>
+    </div>
+  </div>
+
+  <div class="footer">Mott MacDonald Restricted - internal planning lookahead calendar.</div>
+  <script src="./script.js"></script>
+</body>
+</html>
